@@ -1,0 +1,11 @@
+<aura:component >
+	
+    <aura:attribute name="bound" type="String"/>
+    <aura:attribute name="unbound" type="String"/>
+    
+    <div>Result bound   {!v.bound}</div>
+    <div>Result unbound      {!v.unbound}</div>
+    
+    <lightning:input label="test2 change" value="{!v.bound}"></lightning:input> 
+    
+</aura:component>

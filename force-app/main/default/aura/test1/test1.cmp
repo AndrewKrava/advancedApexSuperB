@@ -1,0 +1,19 @@
+<aura:component >
+	
+    <aura:attribute name="bound" type="String"/>
+    <aura:attribute name="unbound" type="String"/>
+    <div>
+    	<p>Check paretn Change      {!v.bound}</p>
+    </div>
+    <div>
+    	<lightning:input label="Enter bound attribute" value="{!v.bound}"></lightning:input>
+    </div>
+    <div>
+    	<lightning:input label="Enter unbound attribute" value="{!v.unbound}"></lightning:input>
+    </div>
+   
+    
+        <c:test2 unbound="{#v.unbound}" bound="{!v.bound}"/>
+
+    
+</aura:component>
