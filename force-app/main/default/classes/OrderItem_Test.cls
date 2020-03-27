@@ -10,7 +10,8 @@ private class OrderItem_Test {
         insert acc;
         
         Product2 prod = new Product2(Name = 'Pizza',
-                                    IsActive =true
+                                    IsActive =true,
+                                    Initial_Inventory__c = 20
                                     );
         insert prod;
         
@@ -22,9 +23,6 @@ private class OrderItem_Test {
 
         insert order;
 
-        // Pricebook2 pricebook = new Pricebook2(Name = 'price for pizza?');
-        // insert pricebook;
-        
         
         PricebookEntry priceItem = new PricebookEntry(Product2Id = prod.Id,
                                                     Pricebook2Id = pricebookId,
@@ -51,11 +49,18 @@ private class OrderItem_Test {
             SELECT Status
             FROM Order
             ];
+        List<Order> newOrder = new List<Order>();
+        for (Order o : resultOrder) {
+            o.Status = 'Activated';
+            newOrder.add(o);
+        }
+        update newOrder;
+        
         List<Product2> resultProd = [
-            SELECT Name
+            SELECT Name, Quantity_Remaining__c
             FROM Product2
             ];
 
-        System.assertEquals(10, resultOI[0].Quantity, 'quantity 10');
+        System.assertEquals(10, resultProd[0].Quantity_Remaining__c, 'quantity remaining 10');
     }
 }
