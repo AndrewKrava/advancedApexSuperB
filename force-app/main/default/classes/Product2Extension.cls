@@ -10,7 +10,7 @@ public class Product2Extension {
         ChartHelper.GetInventory();
     }
 
-    public void AddRows(){
+    public void addRows(){
         for ( Integer i=0; i<Constants.DEFAULT_ROWS; i++ ){
             productsToInsert.add( new ProductWrapper() );
         }
@@ -26,11 +26,11 @@ public class Product2Extension {
         return familyOptions;
     }
 
-    public List<ChartHelper.ChartData> GetInventory(){
+    public List<ChartHelper.ChartData> getInventory(){
         return ChartHelper.GetInventory();
     }
 
-    public PageReference Save(){
+    public PageReference save(){
 
         Savepoint sp = Database.setSavepoint();
         List<Product2> pToInsert = new List<Product2>();
@@ -72,10 +72,10 @@ public class Product2Extension {
         }
          return null;
     }
-    private class ProductWrapper {
+    public class ProductWrapper {
         public Product2 productRecord {get;set;}
         public PricebookEntry pricebookEntryRecord {get;set;}
-        private ProductWrapper() {
+        public ProductWrapper() {
             productRecord = new Product2();
             pricebookEntryRecord = new PricebookEntry();
         }
