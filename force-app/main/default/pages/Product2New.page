@@ -4,7 +4,7 @@
     <apex:form id="form" >
         <apex:actionRegion >
             <apex:pageBlock title="Existing Inventory" id="bartChart">
-                <apex:chart data="{!Inventory}" height="200" width="800">
+                <apex:chart data="{!Inventory}" height="150" width="700">
                     <apex:axis type="Category" position="left" fields="name"/>
                     <apex:axis type="Numeric" position="bottom" fields="val"/>
                     <apex:barSeries orientation="horizontal" axis="bottom" xField="val" yField="name"/>
