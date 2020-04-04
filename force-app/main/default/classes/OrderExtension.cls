@@ -11,7 +11,7 @@ public class OrderExtension {
     public Decimal total {get;set;}
 
     public Map<Id,OrderItem> orderItemMap;
-    ApexPages.StandardSetController standardSetController;
+    //ApexPages.StandardSetController standardSetController;   //???????
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
@@ -19,17 +19,25 @@ public class OrderExtension {
         if ( orderRecord.Id != null ){
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
+        orderItemList = new List<OrderItem>();
+        getOrderItemList();
     }
 
     //ToDo: Implement your own method to populate orderItemList
     //  that you will call after pagination and/or family selection
+    public void getOrderItemList() {
+        orderItemList = [
+                        SELECT Quantity, Product2.Family, Product2.Name, UnitPrice, Product2.Quantity_Remaining__c
+                        FROM OrderItem
+                        ];
+    }
 
 
     /**
      * @name OnFieldChange
      * @description
     **/
-    public void OnFieldChange(){
+    public void onFieldChange(){
         //ToDo: Implement logic to store the values changed on the page
         //      and populate pieData
         //      and populate total
@@ -40,7 +48,7 @@ public class OrderExtension {
      * @name SelectFamily
      * @description
     **/
-    public void SelectFamily(){
+    public void selectFamily(){
         //ToDo: Implement logic to filter based on the selected product family
     }
 
@@ -48,7 +56,7 @@ public class OrderExtension {
      * @name Save
      * @description
     **/
-    public void Save(){
+    public void save(){
         //ToDo: Implement logic to save the Order and populated OrderItems
 
     }
@@ -58,7 +66,7 @@ public class OrderExtension {
      * @name First
      * @description
     **/
-    public void First(){
+    public void first(){
 
     }
 
@@ -67,7 +75,7 @@ public class OrderExtension {
      * @name Next
      * @description
     **/
-    public void Next(){
+    public void next(){
 
     }
 
@@ -76,7 +84,7 @@ public class OrderExtension {
      * @name Previous
      * @description
     **/
-    public void Previous(){
+    public void previous(){
 
     }
 
@@ -84,7 +92,7 @@ public class OrderExtension {
      * @name Last
      * @description
     **/
-    public void Last(){
+    public void last(){
 
     }
 
@@ -92,7 +100,7 @@ public class OrderExtension {
      * @name GetHasPrevious
      * @description
     **/
-    public Boolean GetHasPrevious(){
+    public Boolean getHasPrevious(){
         return null;
     }
 
@@ -100,7 +108,7 @@ public class OrderExtension {
      * @name GetHasNext
      * @description
     **/
-    public Boolean GetHasNext(){
+    public Boolean getHasNext(){
         return null;
     }
 
@@ -108,7 +116,7 @@ public class OrderExtension {
      * @name GetTotalPages
      * @description
     **/
-    public Integer GetTotalPages(){
+    public Integer getTotalPages(){
         return null;
     }
 
@@ -116,7 +124,7 @@ public class OrderExtension {
      * @name GetPageNumber
      * @description
     **/
-    public Integer GetPageNumber(){
+    public Integer getPageNumber(){
         return null;
     }
 
@@ -124,7 +132,7 @@ public class OrderExtension {
      * @name GetFamilyOptions
      * @description
     **/
-    public List<SelectOption> GetFamilyOptions(){
+    public List<SelectOption> getFamilyOptions(){
         return null;
     }
 
@@ -132,7 +140,7 @@ public class OrderExtension {
      * @name QueryOrderRecord
      * @description
     **/
-    public static Order QueryOrderRecord(Id orderId){
+    public static Order queryOrderRecord(Id orderId){
         return [
             SELECT Id, AccountId, EffectiveDate, Name, Status, Pricebook2Id,
                 (
