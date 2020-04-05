@@ -11,7 +11,7 @@ public class OrderExtension {
     public Decimal total {get;set;}
 
     public Map<Id,OrderItem> orderItemMap;
-    //ApexPages.StandardSetController standardSetController;   //???????
+    ApexPages.StandardSetController standardSetController; 
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
@@ -20,17 +20,46 @@ public class OrderExtension {
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
         orderItemList = new List<OrderItem>();
-        getOrderItemList();
+        loadPricebookEntry();
+        loadInitData();
+    }
+
+    private void loadPricebookEntry() {
+        String query = 'SELECT Id, UnitPrice, Product2Id, Product2.Name, Product2.Quantity_Remaining__c, Product2.Family ' +
+                        'FROM PricebookEntry ' +
+                        'WHERE IsActive = true ';
+        standardSetController = new Apexpages.StandardSetController(Database.getQueryLocator(query));
+    }
+    
+    private void loadInitData() {
+        if (orderRecord != null && orderRecord.OrderItems.size() > 0) {
+            for (OrderItem oi : orderRecord.OrderItems) {
+                orderItemMap.put(oi.PricebookEntryId, oi);
+            }
+        }
+
+        if (standardSetController != null && standardSetController.getRecords().size() > 0) {
+            for (PricebookEntry pre : (List<PricebookEntry>) standardSetController.getRecords()) {
+                if (orderItemMap.containsKey(pre.Id)) {
+                    orderItemList.add(orderItemMap.get(pre.Id));
+                }else {
+                    OrderItem oi = new OrderItem(
+                        Quantity = 0,
+                        Product2Id = pre.Product2Id,
+                        Product2 = pre.Product2,
+                        PricebookEntryId = pre.Id,
+                        UnitPrice = pre.UnitPrice
+
+                    );
+                    orderItemList.add(oi);
+                }
+            }
+        }
     }
 
     //ToDo: Implement your own method to populate orderItemList
     //  that you will call after pagination and/or family selection
-    public void getOrderItemList() {
-        orderItemList = [
-                        SELECT Quantity, Product2.Family, Product2.Name, UnitPrice, Product2.Quantity_Remaining__c
-                        FROM OrderItem
-                        ];
-    }
+    public void getOrderItemList() {}
 
 
     /**
