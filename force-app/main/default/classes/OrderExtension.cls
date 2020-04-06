@@ -15,14 +15,16 @@ public class OrderExtension {
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
+        orderItemList = new List<OrderItem>();
         orderItemMap = new Map<id,OrderItem>();
+        
         if ( orderRecord.Id != null ){
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
-        orderItemList = new List<OrderItem>();
+        
         loadPricebookEntry();
         loadInitData();
-        onFieldChange();
+        //onFieldChange();
     }
 
     private void loadPricebookEntry() {
@@ -54,15 +56,21 @@ public class OrderExtension {
 
                     );
                     orderItemList.add(oi);
+                    orderItemMap.put(oi.PricebookEntryId, oi);
                 }
             }
-            sortOrderItemByQuantity();
+            loadOrderItemList();
         }
     }
 
     //ToDo: Implement your own method to populate orderItemList
     //  that you will call after pagination and/or family selection
-    public void getOrderItemList() {}
+    public void loadOrderItemList() {
+        // for (OrderItem oi : orderItemMap.values()) {
+        //     orderItemList.add(oi);
+        // }
+        onFieldChange();
+    }
 
 
     /**
@@ -75,7 +83,7 @@ public class OrderExtension {
         //      and populate total
         pieData = new List<ChartHelper.ChartData>();
         total = 0;
-        for (OrderItem oi : orderItemList) {
+        for (OrderItem oi : orderItemMap.values()) {
             if (oi.Quantity != 0) {
                 total += oi.Quantity * oi.UnitPrice;
                 ChartHelper.ChartData newPieData = new ChartHelper.ChartData(oi.Product2.Name, oi.Quantity * oi.UnitPrice);
@@ -193,37 +201,6 @@ public class OrderExtension {
             FROM Order
             WHERE Id = :orderId
         ];
-    }
-
-    private void sortOrderItemByQuantity() {
-        List<OrderItemWrapper> oiWrapperList = new List<OrderItemWrapper>();
-        if (orderItemList.size() > 0) {
-            for (OrderItem oi : orderItemList) {
-                oiWrapperList.add(new OrderItemWrapper(oi));
-            }
-            orderItemList.clear();
-            oiWrapperList.sort();
-            for (OrderItemWrapper oiWrapper : oiWrapperList) {
-                orderItemList.add(oiWrapper.orderItem);
-            }
-        }
-    }
-
-    public class OrderItemWrapper implements Comparable {
-        OrderItem orderItem;
-        public OrderItemWrapper(OrderItem oi){
-            orderItem = oi;
-        }
-        public Integer compareTo(Object compareTo) {
-            OrderItemWrapper compareToOI = (OrderItemWrapper) compareTo;
-            Integer returnValue = 0;
-            if (orderItem.Quantity > compareToOI.orderItem.Quantity) {
-                returnValue = -1;
-            } else if(orderItem.Quantity < compareToOI.orderItem.Quantity) {
-                returnValue = 1;
-            }
-            return returnValue;
-        }
     }
 }
 
