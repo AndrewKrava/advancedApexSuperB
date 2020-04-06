@@ -22,6 +22,7 @@ public class OrderExtension {
         orderItemList = new List<OrderItem>();
         loadPricebookEntry();
         loadInitData();
+        onFieldChange();
     }
 
     private void loadPricebookEntry() {
@@ -29,6 +30,7 @@ public class OrderExtension {
                         'FROM PricebookEntry ' +
                         'WHERE IsActive = true ';
         standardSetController = new Apexpages.StandardSetController(Database.getQueryLocator(query));
+        standardSetController.setPageSize(Constants.DEFAULT_ROWS);
     }
     
     private void loadInitData() {
@@ -54,6 +56,7 @@ public class OrderExtension {
                     orderItemList.add(oi);
                 }
             }
+            sortOrderItemByQuantity();
         }
     }
 
@@ -70,6 +73,15 @@ public class OrderExtension {
         //ToDo: Implement logic to store the values changed on the page
         //      and populate pieData
         //      and populate total
+        pieData = new List<ChartHelper.ChartData>();
+        total = 0;
+        for (OrderItem oi : orderItemList) {
+            if (oi.Quantity != 0) {
+                total += oi.Quantity * oi.UnitPrice;
+                ChartHelper.ChartData newPieData = new ChartHelper.ChartData(oi.Product2.Name, oi.Quantity * oi.UnitPrice);
+                pieData.add(newPieData);
+            }
+        }
 
     }
 
@@ -105,6 +117,7 @@ public class OrderExtension {
      * @description
     **/
     public void next(){
+        standardSetController.next();
 
     }
 
@@ -138,7 +151,7 @@ public class OrderExtension {
      * @description
     **/
     public Boolean getHasNext(){
-        return null;
+        return standardSetController.getHasNext();
     }
 
     /**
@@ -182,4 +195,35 @@ public class OrderExtension {
         ];
     }
 
+    private void sortOrderItemByQuantity() {
+        List<OrderItemWrapper> oiWrapperList = new List<OrderItemWrapper>();
+        if (orderItemList.size() > 0) {
+            for (OrderItem oi : orderItemList) {
+                oiWrapperList.add(new OrderItemWrapper(oi));
+            }
+            orderItemList.clear();
+            oiWrapperList.sort();
+            for (OrderItemWrapper oiWrapper : oiWrapperList) {
+                orderItemList.add(oiWrapper.orderItem);
+            }
+        }
+    }
+
+    public class OrderItemWrapper implements Comparable {
+        OrderItem orderItem;
+        public OrderItemWrapper(OrderItem oi){
+            orderItem = oi;
+        }
+        public Integer compareTo(Object compareTo) {
+            OrderItemWrapper compareToOI = (OrderItemWrapper) compareTo;
+            Integer returnValue = 0;
+            if (orderItem.Quantity > compareToOI.orderItem.Quantity) {
+                returnValue = -1;
+            } else if(orderItem.Quantity < compareToOI.orderItem.Quantity) {
+                returnValue = 1;
+            }
+            return returnValue;
+        }
+    }
 }
+
