@@ -9,39 +9,38 @@ public class OrderExtension {
     public String selectedFamily {get;set;}
     public List<chartHelper.chartData> pieData {get;set;}
     public Decimal total {get;set;}
-
     public Map<Id,OrderItem> orderItemMap;
     ApexPages.StandardSetController standardSetController; 
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
-        orderItemList = new List<OrderItem>();
         orderItemMap = new Map<id,OrderItem>();
         
         if ( orderRecord.Id != null ){
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
         
+        loadOrderItemInit();
         loadPricebookEntry();
-        loadInitData();
-        //onFieldChange();
     }
+    
 
     private void loadPricebookEntry() {
         String query = 'SELECT Id, UnitPrice, Product2Id, Product2.Name, Product2.Quantity_Remaining__c, Product2.Family ' +
                         'FROM PricebookEntry ' +
                         'WHERE IsActive = true ';
+        if (selectedFamily != null && selectedFamily != Constants.SELECT_ONE) {
+            query += ' AND  Product2.Family = \''+selectedFamily + '\'';
+        } 
         standardSetController = new Apexpages.StandardSetController(Database.getQueryLocator(query));
         standardSetController.setPageSize(Constants.DEFAULT_ROWS);
+        loadOrderItemData();
+
     }
     
-    private void loadInitData() {
-        if (orderRecord != null && orderRecord.OrderItems.size() > 0) {
-            for (OrderItem oi : orderRecord.OrderItems) {
-                orderItemMap.put(oi.PricebookEntryId, oi);
-            }
-        }
+    private void loadOrderItemData() {
 
+        orderItemList = new List<OrderItem>();
         if (standardSetController != null && standardSetController.getRecords().size() > 0) {
             for (PricebookEntry pre : (List<PricebookEntry>) standardSetController.getRecords()) {
                 if (orderItemMap.containsKey(pre.Id)) {
@@ -59,17 +58,18 @@ public class OrderExtension {
                     orderItemMap.put(oi.PricebookEntryId, oi);
                 }
             }
-            loadOrderItemList();
         }
     }
 
     //ToDo: Implement your own method to populate orderItemList
     //  that you will call after pagination and/or family selection
-    public void loadOrderItemList() {
-        // for (OrderItem oi : orderItemMap.values()) {
-        //     orderItemList.add(oi);
-        // }
-        onFieldChange();
+    public void loadOrderItemInit() {
+        if (orderRecord != null && orderRecord.OrderItems.size() > 0) {
+            for (OrderItem oi : orderRecord.OrderItems) {
+                orderItemMap.put(oi.PricebookEntryId, oi);
+            }
+            onFieldChange();
+        }
     }
 
 
@@ -99,6 +99,7 @@ public class OrderExtension {
     **/
     public void selectFamily(){
         //ToDo: Implement logic to filter based on the selected product family
+        loadPricebookEntry();
     }
 
     /**
@@ -107,6 +108,88 @@ public class OrderExtension {
     **/
     public void save(){
         //ToDo: Implement logic to save the Order and populated OrderItems
+        Savepoint sp = Database.setSavepoint();
+
+        if (orderRecord.Id != null) {
+            Order orderToUpdate = new Order(
+                                            Id = orderRecord.Id,
+                                            AccountId = orderRecord.AccountId,
+                                            Name = orderRecord.Name,
+                                            EffectiveDate = orderRecord.EffectiveDate,
+                                            Status = orderRecord.Status
+                                            );
+            
+            List<OrderItem> orderItemsToUpdate = new List<OrderItem>();
+            List<OrderItem> orderItemsToDelete = new List<OrderItem>();
+
+            for (OrderItem oi : orderItemMap.values()) {
+                 if (orderRecord.OrderItems.contains(oi) && oi.Quantity == 0) {
+                     orderItemsToDelete.add(oi);
+                 } else if (oi.Quantity > 0) {
+                    OrderItem newOI = new OrderItem(
+                        OrderId = orderRecord.Id,
+                        PricebookEntryId = oi.PricebookEntryId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice
+                    );
+                    orderItemsToUpdate.add(newOI);
+                 }
+            }
+
+            try {
+                delete orderItemsToDelete;
+                update orderToUpdate;
+                insert orderItemsToUpdate;
+                
+                
+                orderItemMap.clear();
+                orderItemList.clear();
+                orderRecord = queryOrderRecord(orderRecord.Id);
+                loadOrderItemInit();
+                loadPricebookEntry();
+
+
+            } catch (DmlException ex) {
+                if (sp != null) {
+                    Database.rollback(sp);
+                }
+                System.debug(ex.getMessage());
+                apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
+            }
+        } //else {
+        //     Order orderToInsert = new Order(
+        //                                     AccountId = orderRecord.AccountId,
+        //                                     Name = orderRecord.Name,
+        //                                     EffectiveDate = orderRecord.EffectiveDate,
+        //                                     Status = orderRecord.Status
+        //                                 );
+        //     try {
+        //         insert orderToInsert;
+        //     } catch (Exception ex) {
+        //         if (sp != null) {
+        //             Database.rollback(sp);
+        //         }
+        //         System.debug(ex.getMessage());
+        //         apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
+        //     }
+
+        //     List<OrderItem> orderItemsToInsert = new List<OrderItem>();
+        //     for (OrderItem oi : orderItemMap.values()) {
+        //         if (oi.Quantity > 0) {
+        //             oi.OrderId = orderToInsert.Id;
+        //             orderItemsToInsert.add(oi);
+        //         }
+        //     }
+        //     try {
+        //         insert orderItemsToInsert;
+        //     } catch (Exception ex) {
+        //         if (sp != null) {
+        //             Database.rollback(sp);
+        //         }
+        //         System.debug(ex.getMessage());
+        //         apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
+        //     }
+        // }
 
     }
 
@@ -116,7 +199,8 @@ public class OrderExtension {
      * @description
     **/
     public void first(){
-
+        standardSetController.first();
+        loadOrderItemData();
     }
 
 
@@ -126,6 +210,7 @@ public class OrderExtension {
     **/
     public void next(){
         standardSetController.next();
+        loadOrderItemData();
 
     }
 
@@ -135,7 +220,8 @@ public class OrderExtension {
      * @description
     **/
     public void previous(){
-
+        standardSetController.previous();
+        loadOrderItemData();
     }
 
     /**
@@ -143,7 +229,8 @@ public class OrderExtension {
      * @description
     **/
     public void last(){
-
+        standardSetController.last();
+        loadOrderItemData();
     }
 
     /**
@@ -151,7 +238,7 @@ public class OrderExtension {
      * @description
     **/
     public Boolean getHasPrevious(){
-        return null;
+        return standardSetController.getHasPrevious();
     }
 
     /**
@@ -167,7 +254,8 @@ public class OrderExtension {
      * @description
     **/
     public Integer getTotalPages(){
-        return null;
+        Decimal page = (Decimal) standardSetController.getResultSize()/standardSetController.getPageSize();
+        return (Integer) page.round(System.RoundingMode.CEILING);
     }
 
     /**
@@ -175,7 +263,7 @@ public class OrderExtension {
      * @description
     **/
     public Integer getPageNumber(){
-        return null;
+        return standardSetController.getPageNumber();
     }
 
     /**
@@ -183,7 +271,12 @@ public class OrderExtension {
      * @description
     **/
     public List<SelectOption> getFamilyOptions(){
-        return null;
+        List<SelectOption> familyOptions = new List<SelectOption>();
+        familyOptions.add(new SelectOption(Constants.SELECT_ONE, Constants.SELECT_ONE));
+        for (Schema.PicklistEntry o : Constants.PRODUCT_FAMILY) {
+            familyOptions.add(new SelectOption(o.getValue(), o.getLabel()));
+        }
+        return familyOptions;
     }
 
     /**
