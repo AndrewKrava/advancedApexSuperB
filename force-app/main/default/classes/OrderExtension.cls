@@ -14,9 +14,6 @@ public class OrderExtension {
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
-        
-        
-        
         if ( orderRecord.Id != null ){
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
@@ -24,11 +21,6 @@ public class OrderExtension {
         populateOrderItemMap();
         loadPricebookEntry();
     }
-
-    //method to populate existing order list to Map oi
-    
-    //method to 
-    
 
     private void loadPricebookEntry() {
         String query = 'SELECT Id, UnitPrice, Product2Id, Product2.Name, Product2.Quantity_Remaining__c, Product2.Family ' +
@@ -55,7 +47,6 @@ public class OrderExtension {
                         Product2 = pre.Product2,
                         PricebookEntryId = pre.Id,
                         UnitPrice = pre.UnitPrice
-
                     );
                     orderItemList.add(oi);
                     orderItemMap.put(oi.PricebookEntryId, oi);
