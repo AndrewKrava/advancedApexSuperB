@@ -14,15 +14,20 @@ public class OrderExtension {
 
     public OrderExtension(ApexPages.StandardController standardController){
         orderRecord = (Order)standardController.getRecord();
-        orderItemMap = new Map<id,OrderItem>();
+        
+        
         
         if ( orderRecord.Id != null ){
             orderRecord = queryOrderRecord(orderRecord.Id);
         }
         
-        loadOrderItemInit();
+        populateOrderItemMap();
         loadPricebookEntry();
     }
+
+    //method to populate existing order list to Map oi
+    
+    //method to 
     
 
     private void loadPricebookEntry() {
@@ -35,11 +40,9 @@ public class OrderExtension {
         standardSetController = new Apexpages.StandardSetController(Database.getQueryLocator(query));
         standardSetController.setPageSize(Constants.DEFAULT_ROWS);
         loadOrderItemData();
-
     }
     
     private void loadOrderItemData() {
-
         orderItemList = new List<OrderItem>();
         if (standardSetController != null && standardSetController.getRecords().size() > 0) {
             for (PricebookEntry pre : (List<PricebookEntry>) standardSetController.getRecords()) {
@@ -59,16 +62,17 @@ public class OrderExtension {
                 }
             }
         }
+        onFieldChange();
     }
 
     //ToDo: Implement your own method to populate orderItemList
     //  that you will call after pagination and/or family selection
-    public void loadOrderItemInit() {
+    public void populateOrderItemMap() {
+        orderItemMap = new Map<id,OrderItem>();
         if (orderRecord != null && orderRecord.OrderItems.size() > 0) {
             for (OrderItem oi : orderRecord.OrderItems) {
                 orderItemMap.put(oi.PricebookEntryId, oi);
             }
-            onFieldChange();
         }
     }
 
@@ -145,7 +149,7 @@ public class OrderExtension {
                 orderItemMap.clear();
                 orderItemList.clear();
                 orderRecord = queryOrderRecord(orderRecord.Id);
-                loadOrderItemInit();
+                // loadOrderItemInit();
                 loadPricebookEntry();
 
 
