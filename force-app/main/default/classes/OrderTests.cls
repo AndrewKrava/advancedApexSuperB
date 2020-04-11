@@ -68,8 +68,17 @@ private class OrderTests {
     }
 
     @isTest
-    private stativ void OrderExtension_UnitTest() {
-        
+    private static void orderExtension_UnitTest() {
+        Account acc = TestDataFactory.constructAccounts(1)[0];
+        insert acc;
+        Order orderCont = new Order(
+                                    AccountId = acc.Id,
+                                    EffectiveDate = Date.today(),
+                                    Name = 'Test Order',
+                                    Status = Constants.DRAFT_ORDER_STATUS
+                                );
+        insert orderCont;
+        OrderExtension OrderExt = new OrderExtension(new Apexpages.StandardController(orderCont));
     }
 
 }
