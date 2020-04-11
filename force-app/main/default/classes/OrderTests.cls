@@ -65,8 +65,11 @@ private class OrderTests {
         
         TestDataFactory.verifyQuantityOrderedGood(originProducts, newProducts, Constants.DEFAULT_ROWS);
         System.assertEquals(Constants.DEFAULT_ROWS, newProducts[0].Quantity_Ordered__c, 'Expected 5 items was order!');
+    }
 
-
+    @isTest
+    private stativ void OrderExtension_UnitTest() {
+        
     }
 
 }
