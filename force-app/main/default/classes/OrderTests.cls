@@ -69,16 +69,53 @@ private class OrderTests {
 
     @isTest
     private static void orderExtension_UnitTest() {
-        Account acc = TestDataFactory.constructAccounts(1)[0];
-        insert acc;
+        Account acc = [
+                        SELECT Id
+                        FROM Account
+                        WHERE Name = 'Account Test 1'
+                        LIMIT 1
+                        ];
         Order orderCont = new Order(
                                     AccountId = acc.Id,
                                     EffectiveDate = Date.today(),
                                     Name = 'Test Order',
                                     Status = Constants.DRAFT_ORDER_STATUS
                                 );
-        insert orderCont;
-        OrderExtension OrderExt = new OrderExtension(new Apexpages.StandardController(orderCont));
+        Order editOrder = [
+                            SELECT Id, Name, EffectiveDate, Status, AccountId, Pricebook2Id,
+                            (
+                                SELECT Id, OrderId, Quantity, UnitPrice, PricebookEntryId, PricebookEntry.Product2Id,
+                                        PricebookEntry.Product2.Name, PricebookEntry.Product2.Family, 
+                                        PricebookEntry.Product2.Quantity_Remaining__c
+                                FROM OrderItems
+                            )
+                            FROM Order
+                            WHERE Name LIKE 'Test Order%'
+                            LIMIT 1
+                        ];
+
+        Test.startTest();
+            OrderExtension newOrderExt = new OrderExtension(new Apexpages.StandardController(orderCont));
+            OrderExtension editOrderExt = new OrderExtension(new Apexpages.StandardController(editOrder));
+            List<OrderItem> editInitOrderItem = editOrderExt.orderRecord.OrderItems;
+        Test.stopTest();
+
+        //can test init method and mapList
+        List<OrderItem> editOrderItem = [
+                        SELECT Id, OrderId, Quantity, UnitPrice, PricebookEntryId, PricebookEntry.Product2Id,
+                                PricebookEntry.Product2.Name, PricebookEntry.Product2.Family, 
+                                PricebookEntry.Product2.Quantity_Remaining__c
+                        FROM OrderItem
+                        WHERE OrderId = :editOrder.Id
+                        ];
+        System.debug('order id...' + editOrder.Id);
+        System.debug('map..' + editInitOrderItem);
+        System.debug('list ..' + editOrderItem);
+        System.assertEquals(editOrderItem.size(), editInitOrderItem.size(), 'expected one order item in edit page');
+
+        //test chart helper 
+
+
     }
 
 }
