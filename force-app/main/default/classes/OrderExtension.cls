@@ -104,88 +104,46 @@ public class OrderExtension {
     public void save(){
         //ToDo: Implement logic to save the Order and populated OrderItems
         Savepoint sp = Database.setSavepoint();
-
-        if (orderRecord.Id != null) {
-            Order orderToUpdate = new Order(
-                                            Id = orderRecord.Id,
-                                            AccountId = orderRecord.AccountId,
-                                            Name = orderRecord.Name,
-                                            EffectiveDate = orderRecord.EffectiveDate,
-                                            Status = orderRecord.Status
-                                            );
+        if (orderRecord.Id == null) {
+            orderRecord.Pricebook2Id = Constants.STANDARD_PRICEBOOK_ID;
+        }
+        try {
+            upsert orderRecord;
+        } catch (Exception ex) {
+            if (sp != null) {
+                Database.rollback(sp);
+            }
+            System.debug(ex.getMessage());
+            apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
+        }
+        
+        List<OrderItem> deleteListOI = new List<OrderItem>();
+        List<OrderItem> upsertListOI = new List<OrderItem>();
+        for (OrderItem oi : orderItemMap.values()) {
+            if (oi.OrderId != null && oi.Quantity == 0) {
+                deleteListOI.add(oi);
+            } else if(oi.OrderId == null && oi.Quantity > 0) {
+                //upsert oi
+                oi.OrderId = orderRecord.Id;
+                upsertListOI.add(oi);
+            }
+        }
+   
+        try {
             
-            List<OrderItem> orderItemsToUpdate = new List<OrderItem>();
-            List<OrderItem> orderItemsToDelete = new List<OrderItem>();
+            delete deleteListOI;
+            upsert upsertListOI;
 
-            for (OrderItem oi : orderItemMap.values()) {
-                 if (orderRecord.OrderItems.contains(oi) && oi.Quantity == 0) {
-                     orderItemsToDelete.add(oi);
-                 } else if (oi.Quantity > 0) {
-                    OrderItem newOI = new OrderItem(
-                        OrderId = orderRecord.Id,
-                        PricebookEntryId = oi.PricebookEntryId,
-                        Quantity = oi.Quantity,
-                        UnitPrice = oi.UnitPrice
-                    );
-                    orderItemsToUpdate.add(newOI);
-                 }
+            orderRecord = queryOrderRecord(orderRecord.Id);
+            populateOrderItemMap();
+            loadPricebookEntry();
+        } catch (Exception ex) {
+            if (sp != null) {
+                Database.rollback(sp);
             }
-
-            try {
-                delete orderItemsToDelete;
-                update orderToUpdate;
-                insert orderItemsToUpdate;
-                
-                
-                orderItemMap.clear();
-                orderItemList.clear();
-                orderRecord = queryOrderRecord(orderRecord.Id);
-                // loadOrderItemInit();
-                loadPricebookEntry();
-
-
-            } catch (DmlException ex) {
-                if (sp != null) {
-                    Database.rollback(sp);
-                }
-                System.debug(ex.getMessage());
-                apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
-            }
-        } //else {
-        //     Order orderToInsert = new Order(
-        //                                     AccountId = orderRecord.AccountId,
-        //                                     Name = orderRecord.Name,
-        //                                     EffectiveDate = orderRecord.EffectiveDate,
-        //                                     Status = orderRecord.Status
-        //                                 );
-        //     try {
-        //         insert orderToInsert;
-        //     } catch (Exception ex) {
-        //         if (sp != null) {
-        //             Database.rollback(sp);
-        //         }
-        //         System.debug(ex.getMessage());
-        //         apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
-        //     }
-
-        //     List<OrderItem> orderItemsToInsert = new List<OrderItem>();
-        //     for (OrderItem oi : orderItemMap.values()) {
-        //         if (oi.Quantity > 0) {
-        //             oi.OrderId = orderToInsert.Id;
-        //             orderItemsToInsert.add(oi);
-        //         }
-        //     }
-        //     try {
-        //         insert orderItemsToInsert;
-        //     } catch (Exception ex) {
-        //         if (sp != null) {
-        //             Database.rollback(sp);
-        //         }
-        //         System.debug(ex.getMessage());
-        //         apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
-        //     }
-        // }
-
+            System.debug(ex.getMessage());
+            apexPages.addMessage(new Apexpages.Message(Apexpages.Severity.ERROR, Constants.ERROR_MESSAGE));
+        }
     }
 
 
