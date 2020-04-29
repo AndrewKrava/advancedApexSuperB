@@ -1,6 +1,8 @@
 @isTest (seeAllData=true)
 private class Product2Tests {
 
+
+
     /**
      * @name product2Extension_UnitTest
      * @description UnitTest for product2Extension
@@ -43,5 +45,30 @@ private class Product2Tests {
         System.assertEquals(5, familyOptions.size(), 'Expected 5 elements!');
         System.assertEquals('Select one', familyOptions[0].getLabel(), '\"Select one\" expected first label in Family pick list!');
     }
+
+    @isTest
+    private static void Product2Trigger_UnitTest() {
+        TestDataFactory.insertTestData(10);
+        List<Product2> productsToUpdate = new List<Product2>();
+        List<Product2> products = [
+                                        SELECT Name, Quantity_Ordered__c
+                                        FROM Product2
+                                        WHERE Name LIKE 'Test Product%'
+                                    ];
+        for (Product2 p : products) {
+            p.Quantity_Ordered__c += 500;
+            productsToUpdate.add(p);
+        }
+        Test.startTest();
+            update productsToUpdate;
+        Test.stopTest();
+        List<FeedItem> feedItem = [
+                                    SELECT Body, CreatedDate, ParentId, Type, CreatedById, CreatedBy.Name
+                                    FROM FeedItem 
+                                    WHERE CreatedDate = Today
+                                    ];
+        System.assertNotEquals(null, feedItem, 'not null');
+    }
+
 
 }

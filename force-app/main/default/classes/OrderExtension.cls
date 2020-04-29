@@ -134,6 +134,8 @@ public class OrderExtension {
             delete deleteListOI;
             upsert upsertListOI;
 
+            orderItemMap.clear();
+            orderItemList.clear();
             orderRecord = queryOrderRecord(orderRecord.Id);
             populateOrderItemMap();
             loadPricebookEntry();
