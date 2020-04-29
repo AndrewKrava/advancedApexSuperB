@@ -9,15 +9,4 @@ public class Constants {
     public static final String ERROR_MESSAGE = 'An error has occurred, please take a screenshot with the URL and send it to IT.';
     public static final Id STANDARD_PRICEBOOK_ID = '01s3X000004GojTQAS';
     
-    
-    public static void print() {
-        if (PRODUCT_FAMILY.size() > 0) {
-            for (Schema.PicklistEntry i : PRODUCT_FAMILY) {
-                System.debug('string ' + i.getValue());
-            }
-        }
-        
-        
-    }
-
 }
